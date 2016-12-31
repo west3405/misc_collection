@@ -39,15 +39,17 @@ class VossPinkNoise(td._Noise):
         
         # Determine number of rows needed, need 1 for each bit in size of ts
         # if len(ts) is 6 need 3 bits, if len(ts) = n need log2(n) bits
-        temp = 0x80
+      
         num_rows = 0
-        while not temp & len(ts):
-            temp = temp>>1
+        temp = 1
+        while temp <= len(ts):
+            temp = temp<<1
+        temp = temp >> 1
+
         #counts sig bit bits in temp
-        while temp & 0xFF:
+        while temp > 0:
             temp = temp>>1
             num_rows += 1
-        
         #create array with all 0s 
         rows = np.zeros((num_rows,len(ts)))
         # IAW Voss-Mcartney Algo
@@ -57,7 +59,7 @@ class VossPinkNoise(td._Noise):
         # eleemnts in row i change every 1<<i th time
         for i in range(num_rows):
             cntr = 0
-            tst = 0x01<<i
+            tst = 0x00000001<<i
             for j in range(len(ts)):
                 cntr += 1
                 if cntr == tst or j == 0:
@@ -75,7 +77,7 @@ class VossPinkNoise(td._Noise):
         return ys
             
 sig = VossPinkNoise()
-wave = sig.make_wave(duration=10)
+wave = sig.make_wave(duration=1)
 spect = wave.make_spectrum()
 spect.plot_power()
 tp.config(ylabel='Power',xlabel='Frequency (Hz)',xscale='log',yscale='log')
@@ -83,9 +85,11 @@ tp.show()
 
 # resulting slope is around -1
 print(spect.estimate_slope().slope)
+print('\n')
 
 spect = bartlett_method(wave)
 spect.plot(high=100000,linewidth=1)
 tp.config(ylabel='Power',xlabel='Frequency (Hz)',xscale='log',yscale='log')
 tp.show()
 print(spect.estimate_slope().slope)
+print('\n')
